@@ -132,7 +132,33 @@ function LoginForm({ onLogin }: LoginFormProps) {
           </form>
         )}
 
-        <div className="text-center">
+        <div className="text-center space-y-3">
+          <div className="border-t pt-4">
+            <p className="text-sm text-muted-foreground mb-3">Ou teste a aplicação:</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={() => onLogin('student', 'demo-student@athletica.com', 'demo123')}
+                variant="outline"
+                size="sm"
+                data-testid="button-demo-student"
+                disabled={loading}
+              >
+                <User className="w-4 h-4 mr-2" />
+                Demo Estudante
+              </Button>
+              <Button
+                onClick={() => onLogin('trainer', 'demo-trainer@athletica.com', 'demo123')}
+                variant="outline"
+                size="sm"
+                data-testid="button-demo-trainer"
+                disabled={loading}
+              >
+                <User className="w-4 h-4 mr-2" />
+                Demo Treinador
+              </Button>
+            </div>
+          </div>
+          
           <button
             onClick={() => setShowTrainerLogin(!showTrainerLogin)}
             className="text-sm text-primary hover:underline"

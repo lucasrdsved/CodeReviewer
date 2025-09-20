@@ -77,6 +77,21 @@ function App() {
   const handleLogin = async (userType: 'student' | 'trainer', email: string, password: string) => {
     console.log('Login attempt:', { userType, email });
     
+    // Handle demo accounts with mock data
+    if (email.includes('demo-')) {
+      console.log('Demo login detected');
+      const mockUser: User = {
+        name: userType === 'student' ? 'Maria Silva (Demo)' : 'Lucas Personal (Demo)',
+        type: userType,
+        avatar: undefined
+      };
+      
+      setCurrentUser(mockUser);
+      setActiveView('dashboard');
+      return { data: { user: mockUser }, error: null };
+    }
+    
+    // Real Supabase authentication
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -100,6 +115,15 @@ function App() {
   // Handle logout
   const handleLogout = async () => {
     console.log('Logout triggered');
+    
+    // Check if it's a demo user
+    if (currentUser?.name.includes('(Demo)')) {
+      setCurrentUser(null);
+      setActiveView('login');
+      return;
+    }
+    
+    // Real logout for Supabase users
     await supabase.auth.signOut();
   };
 
