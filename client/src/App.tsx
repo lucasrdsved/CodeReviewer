@@ -5,13 +5,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Import all main components
-import LoginForm from "./components/LoginForm";
-import StudentDashboard from "./components/StudentDashboard";
-import TrainerDashboard from "./components/TrainerDashboard";
-import BottomNavigation from "./components/BottomNavigation";
-import WorkoutPlayer from "./components/WorkoutPlayer";
-import ChatInterface from "./components/ChatInterface";
-import WelcomeHeader from "./components/WelcomeHeader";
+import LoginForm from "./components/examples/LoginForm";
+import StudentDashboard from "./components/examples/StudentDashboard";
+import TrainerDashboard from "./components/examples/TrainerDashboard";
+import BottomNavigation from "./components/examples/BottomNavigation";
+import WorkoutPlayer from "./components/examples/WorkoutPlayer";
+import ChatInterface from "./components/examples/ChatInterface";
+import WelcomeHeader from "./components/examples/WelcomeHeader";
 
 // Types
 type UserType = 'student' | 'trainer' | null;
@@ -119,6 +119,9 @@ function App() {
           return <TrainerDashboard trainer={currentUser} />;
         }
         break;
+
+      case 'workout':
+        return <WorkoutPlayer />;
 
       case 'analytics':
         if (currentUser.type === 'trainer') {
