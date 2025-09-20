@@ -77,39 +77,46 @@ function App() {
   const handleLogin = async (userType: 'student' | 'trainer', email: string, password: string) => {
     console.log('Login attempt:', { userType, email });
     
-    // Handle demo accounts with mock data
-    if (email.includes('demo-')) {
-      console.log('Demo login detected');
-      const mockUser: User = {
-        name: userType === 'student' ? 'Maria Silva (Demo)' : 'Lucas Personal (Demo)',
-        type: userType,
-        avatar: undefined
-      };
+    try {
+      // Handle demo accounts with mock data - ALWAYS works regardless of Supabase
+      if (email.includes('demo-')) {
+        console.log('Demo login detected');
+        const mockUser: User = {
+          name: userType === 'student' ? 'Maria Silva (Demo)' : 'Lucas Personal (Demo)',
+          type: userType,
+          avatar: undefined
+        };
+        
+        setCurrentUser(mockUser);
+        setActiveView('dashboard');
+        setActiveTab('home');
+        setLoading(false);
+        return { data: { user: mockUser }, error: null };
+      }
       
-      setCurrentUser(mockUser);
-      setActiveView('dashboard');
-      return { data: { user: mockUser }, error: null };
-    }
-    
-    // Real Supabase authentication
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+      // Real Supabase authentication
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
+      if (error) {
+        console.error('Login error:', error);
+        return { error };
+      }
+
+      // Update user metadata if needed
+      if (data.user && data.user.user_metadata?.user_type !== userType) {
+        await supabase.auth.updateUser({
+          data: { user_type: userType }
+        });
+      }
+
+      return { data, error: null };
+    } catch (error) {
       console.error('Login error:', error);
       return { error };
     }
-
-    // Update user metadata if needed
-    if (data.user && data.user.user_metadata?.user_type !== userType) {
-      await supabase.auth.updateUser({
-        data: { user_type: userType }
-      });
-    }
-
-    return { data, error: null };
   };
 
   // Handle logout

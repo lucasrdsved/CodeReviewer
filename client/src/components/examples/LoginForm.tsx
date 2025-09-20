@@ -137,24 +137,32 @@ function LoginForm({ onLogin }: LoginFormProps) {
             <p className="text-sm text-muted-foreground mb-3">Ou teste a aplicação:</p>
             <div className="grid grid-cols-2 gap-3">
               <Button
-                onClick={() => onLogin('student', 'demo-student@athletica.com', 'demo123')}
+                onClick={async () => {
+                  setLoading(true);
+                  await onLogin('student', 'demo-student@athletica.com', 'demo123');
+                  setLoading(false);
+                }}
                 variant="outline"
                 size="sm"
                 data-testid="button-demo-student"
                 disabled={loading}
               >
                 <User className="w-4 h-4 mr-2" />
-                Demo Estudante
+                {loading ? 'Entrando...' : 'Demo Estudante'}
               </Button>
               <Button
-                onClick={() => onLogin('trainer', 'demo-trainer@athletica.com', 'demo123')}
+                onClick={async () => {
+                  setLoading(true);
+                  await onLogin('trainer', 'demo-trainer@athletica.com', 'demo123');
+                  setLoading(false);
+                }}
                 variant="outline"
                 size="sm"
                 data-testid="button-demo-trainer"
                 disabled={loading}
               >
                 <User className="w-4 h-4 mr-2" />
-                Demo Treinador
+                {loading ? 'Entrando...' : 'Demo Treinador'}
               </Button>
             </div>
           </div>
