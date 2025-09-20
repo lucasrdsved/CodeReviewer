@@ -96,7 +96,7 @@ function App() {
         return (
           <div className="p-4 max-w-md mx-auto">
             <ChatInterface 
-              currentUser={currentUser.type}
+              currentUser={currentUser.type as 'student' | 'trainer'}
               otherUser={otherUser}
             />
           </div>
@@ -160,7 +160,7 @@ function App() {
           {/* Bottom Navigation */}
           {showBottomNav && currentUser && (
             <BottomNavigation
-              userType={currentUser.type}
+              userType={currentUser.type as 'student' | 'trainer'}
               activeTab={activeTab}
               onTabChange={handleTabChange}
               unreadMessages={3} // todo: replace with real data

@@ -24,7 +24,7 @@ export default function BottomNavigation({
   onTabChange, 
   unreadMessages = 0 
 }: BottomNavigationProps) {
-  const studentTabs = [
+  const studentTabs: Array<{id: string, label: string, icon: any, badge?: number}> = [
     { id: 'home', label: 'Início', icon: Home },
     { id: 'workouts', label: 'Treinos', icon: Activity },
     { id: 'progress', label: 'Progresso', icon: TrendingUp },
@@ -32,7 +32,7 @@ export default function BottomNavigation({
     { id: 'profile', label: 'Perfil', icon: User }
   ];
 
-  const trainerTabs = [
+  const trainerTabs: Array<{id: string, label: string, icon: any, badge?: number}> = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'students', label: 'Alunos', icon: Users },
     { id: 'workouts', label: 'Treinos', icon: Activity },
@@ -64,12 +64,12 @@ export default function BottomNavigation({
             >
               <div className="relative">
                 <Icon className={`h-5 w-5 ${isActive ? 'text-primary' : ''}`} />
-                {'badge' in tab && tab.badge && tab.badge > 0 && (
+                {tab.badge && tab.badge > 0 && (
                   <Badge 
                     variant="destructive" 
                     className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex items-center justify-center"
                   >
-                    {'badge' in tab && tab.badge > 99 ? '99+' : 'badge' in tab ? tab.badge : 0}
+                    {tab.badge > 99 ? '99+' : tab.badge}
                   </Badge>
                 )}
               </div>
