@@ -1,8 +1,11 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { supabase } from "@/lib/supabase";
+import type { Session } from '@supabase/supabase-js';
 
 // Import all main components
 import LoginForm from "./components/examples/LoginForm";
@@ -24,31 +27,80 @@ interface User {
 }
 
 function App() {
+  const [session, setSession] = useState<Session | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeView, setActiveView] = useState<AppView>('login');
   const [activeTab, setActiveTab] = useState('home');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        // Set user data from session
+        const userData: User = {
+          name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+          type: session.user.user_metadata?.user_type || 'student',
+          avatar: session.user.user_metadata?.avatar_url
+        };
+        setCurrentUser(userData);
+        setActiveView('dashboard');
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session?.user) {
+        const userData: User = {
+          name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+          type: session.user.user_metadata?.user_type || 'student',
+          avatar: session.user.user_metadata?.avatar_url
+        };
+        setCurrentUser(userData);
+        setActiveView('dashboard');
+      } else {
+        setCurrentUser(null);
+        setActiveView('login');
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Handle login from LoginForm
-  const handleLogin = (userType: 'student' | 'trainer', username: string) => {
-    console.log('Login successful:', { userType, username });
+  const handleLogin = async (userType: 'student' | 'trainer', email: string, password: string) => {
+    console.log('Login attempt:', { userType, email });
     
-    const userData: User = {
-      name: userType === 'trainer' ? 'Lucas' : username,
-      type: userType,
-      avatar: undefined
-    };
-    
-    setCurrentUser(userData);
-    setActiveView('dashboard');
-    setActiveTab(userType === 'student' ? 'home' : 'dashboard');
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error('Login error:', error);
+      return { error };
+    }
+
+    // Update user metadata if needed
+    if (data.user && data.user.user_metadata?.user_type !== userType) {
+      await supabase.auth.updateUser({
+        data: { user_type: userType }
+      });
+    }
+
+    return { data, error: null };
   };
 
   // Handle logout
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log('Logout triggered');
-    setCurrentUser(null);
-    setActiveView('login');
-    setActiveTab('home');
+    await supabase.auth.signOut();
   };
 
   // Handle navigation
@@ -81,9 +133,21 @@ function App() {
     setActiveView('workout');
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Athletica Pro</h2>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Render current view content
   const renderMainContent = () => {
-    if (!currentUser) {
+    if (!session || !currentUser) {
       return <LoginForm onLogin={handleLogin} />;
     }
 
@@ -142,14 +206,14 @@ function App() {
   };
 
   // Show bottom navigation for logged in users (except on workout view)
-  const showBottomNav = currentUser && activeView !== 'workout' && activeView !== 'login';
+  const showBottomNav = session && activeView !== 'workout' && activeView !== 'login';
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className="min-h-screen bg-background">
           {/* Header for logged-in users */}
-          {currentUser && activeView !== 'login' && (
+          {session && activeView !== 'login' && (
             <div className="sticky top-0 z-40 bg-background border-b">
               <WelcomeHeader />
             </div>
@@ -171,7 +235,7 @@ function App() {
           )}
 
           {/* PWA Install Button - Fixed position */}
-          {currentUser && (
+          {session && (
             <div className="fixed top-4 right-4 z-50">
               <button
                 onClick={() => {
@@ -187,7 +251,7 @@ function App() {
           )}
 
           {/* Debug Panel - Only in development */}
-          {import.meta.env.DEV && currentUser && (
+          {import.meta.env.DEV && session && currentUser && (
             <div className="fixed bottom-4 left-4 bg-background border rounded-lg p-3 shadow-lg text-xs space-y-2 z-40">
               <div className="font-semibold">Debug Info</div>
               <div>User: {currentUser.name} ({currentUser.type})</div>
