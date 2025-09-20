@@ -4,8 +4,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { supabase } from "@/lib/supabase";
-import type { Session } from '@supabase/supabase-js';
+// Demo mode - no Supabase required
+// import { supabase } from "@/lib/supabase";
+// import type { Session } from '@supabase/supabase-js';
 
 // Import all main components
 import LoginForm from "./components/examples/LoginForm";
@@ -27,111 +28,43 @@ interface User {
 }
 
 function App() {
-  const [session, setSession] = useState<Session | null>(null);
+  // Demo mode - simplified state management
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeView, setActiveView] = useState<AppView>('login');
   const [activeTab, setActiveTab] = useState('home');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // No loading for demo
 
+  // Demo mode - no Supabase authentication needed
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        // Set user data from session
-        const userData: User = {
-          name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-          type: session.user.user_metadata?.user_type || 'student',
-          avatar: session.user.user_metadata?.avatar_url
-        };
-        setCurrentUser(userData);
-        setActiveView('dashboard');
-      }
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user) {
-        const userData: User = {
-          name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-          type: session.user.user_metadata?.user_type || 'student',
-          avatar: session.user.user_metadata?.avatar_url
-        };
-        setCurrentUser(userData);
-        setActiveView('dashboard');
-      } else {
-        setCurrentUser(null);
-        setActiveView('login');
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    // Demo is ready immediately
+    setLoading(false);
   }, []);
 
-  // Handle login from LoginForm
+  // Handle login - Demo mode only
   const handleLogin = async (userType: 'student' | 'trainer', email: string, password: string) => {
-    console.log('Login attempt:', { userType, email });
+    console.log('Demo login attempt:', { userType, email });
     
-    try {
-      // Handle demo accounts with mock data - ALWAYS works regardless of Supabase
-      if (email.includes('demo-')) {
-        console.log('Demo login detected');
-        const mockUser: User = {
-          name: userType === 'student' ? 'Maria Silva (Demo)' : 'Lucas Personal (Demo)',
-          type: userType,
-          avatar: undefined
-        };
-        
-        setCurrentUser(mockUser);
-        setActiveView('dashboard');
-        setActiveTab('home');
-        setLoading(false);
-        return { data: { user: mockUser }, error: null };
-      }
-      
-      // Real Supabase authentication
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error('Login error:', error);
-        return { error };
-      }
-
-      // Update user metadata if needed
-      if (data.user && data.user.user_metadata?.user_type !== userType) {
-        await supabase.auth.updateUser({
-          data: { user_type: userType }
-        });
-      }
-
-      return { data, error: null };
-    } catch (error) {
-      console.error('Login error:', error);
-      return { error };
-    }
+    // Demo mode - all logins work as demo accounts
+    const mockUser: User = {
+      name: userType === 'student' ? 'Maria Silva (Demo)' : 'Lucas Personal (Demo)',
+      type: userType,
+      avatar: undefined
+    };
+    
+    setCurrentUser(mockUser);
+    setActiveView('dashboard');
+    setActiveTab('home');
+    
+    console.log('Demo login successful:', mockUser);
+    return { data: { user: mockUser }, error: null };
   };
 
-  // Handle logout
+  // Handle logout - Demo mode
   const handleLogout = async () => {
-    console.log('Logout triggered');
-    
-    // Check if it's a demo user
-    if (currentUser?.name.includes('(Demo)')) {
-      setCurrentUser(null);
-      setActiveView('login');
-      return;
-    }
-    
-    // Real logout for Supabase users
-    await supabase.auth.signOut();
+    console.log('Demo logout triggered');
+    setCurrentUser(null);
+    setActiveView('login');
+    setActiveTab('home');
   };
 
   // Handle navigation
@@ -176,9 +109,9 @@ function App() {
     );
   }
 
-  // Render current view content
+  // Render current view content - Demo mode
   const renderMainContent = () => {
-    if (!session || !currentUser) {
+    if (!currentUser) {
       return <LoginForm onLogin={handleLogin} />;
     }
 
@@ -236,15 +169,15 @@ function App() {
     }
   };
 
-  // Show bottom navigation for logged in users (except on workout view)
-  const showBottomNav = session && activeView !== 'workout' && activeView !== 'login';
+  // Show bottom navigation for logged in users (except on workout view) - Demo mode
+  const showBottomNav = currentUser && activeView !== 'workout' && activeView !== 'login';
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className="min-h-screen bg-background">
-          {/* Header for logged-in users */}
-          {session && activeView !== 'login' && (
+          {/* Header for logged-in users - Demo mode */}
+          {currentUser && activeView !== 'login' && (
             <div className="sticky top-0 z-40 bg-background border-b">
               <WelcomeHeader />
             </div>
@@ -265,8 +198,8 @@ function App() {
             />
           )}
 
-          {/* PWA Install Button - Fixed position */}
-          {session && (
+          {/* PWA Install Button - Fixed position - Demo mode */}
+          {currentUser && (
             <div className="fixed top-4 right-4 z-50">
               <button
                 onClick={() => {
@@ -281,8 +214,8 @@ function App() {
             </div>
           )}
 
-          {/* Debug Panel - Only in development */}
-          {import.meta.env.DEV && session && currentUser && (
+          {/* Debug Panel - Only in development - Demo mode */}
+          {import.meta.env.DEV && currentUser && (
             <div className="fixed bottom-4 left-4 bg-background border rounded-lg p-3 shadow-lg text-xs space-y-2 z-40">
               <div className="font-semibold">Debug Info</div>
               <div>User: {currentUser.name} ({currentUser.type})</div>
